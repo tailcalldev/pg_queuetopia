@@ -1,0 +1,58 @@
+name: main
+
+on: [push, pull_request]
+
+jobs:
+  mix_test:
+    name: mix test (Elixir ${{ matrix.elixir }} OTP ${{ matrix.otp }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        otp: ["22.2"]
+        elixir: ["1.11.3"]
+
+    services:
+      postgres:
+        image: postgres:12-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup elixir
+        uses: erlef/setup-elixir@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+
+      - uses: actions/cache@v1
+        id: deps-cache
+        with:
+          path: deps
+          key: ${{ runner.os }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+
+      - uses: actions/cache@v1
+        id: build-cache
+        with:
+          path: _build
+          key: ${{ runner.os }}-build-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+
+      - name: Install Dependencies
+        run: mix deps.get
+
+      - name: Linter
+        run: mix format --check-formatted
+
+      - name: Run Tests (Code coverage)
+        env:
+          MIX_ENV: test
+          PG_QUEUETOPIA__DATABASE_TEST_URL: ecto://postgres:postgres@localhost/queuetopia
+        run: mix test --cover
