@@ -41,7 +41,7 @@ The package can be installed by adding `pg_queuetopia` to your list of dependenc
 ```elixir
 def deps do
   [
-    {:pg_queuetopia, "~> 1.0.0"}
+    {:pg_queuetopia, "~> 1.1.0"}
   ]
 end
 ```
@@ -61,11 +61,11 @@ defmodule MyApp.Repo.Migrations.CreatePgQueuetopiaTables do
   use Ecto.Migration
 
   def up do
-    PgQueuetopia.Migrations.V1.up
+    PgQueuetopia.Migrations.up()
   end
 
   def down do
-    PgQueuetopia.Migrations.V1.down
+    PgQueuetopia.Migrations.down()
   end
 end
 ```
@@ -152,14 +152,21 @@ By default, it will be set to 60 seconds.
 To create a job defines its action and its params and configure its timeout and the max backoff for the retries.
 By default, the job timeout is set to 60 seconds, the max backoff to 24 hours and the max attempts to 20.
 
+```elixir
+MyApp.MailPgQueuetopia.create_job!("mails_queue_1", "send_mail", %{email_address: "toto@mail.com", body: "Welcome"}, [timeout: 1_000, max_backoff: 60_000])
+```
+
+or
 
 ```elixir
 MyApp.MailPgQueuetopia.create_job("mails_queue_1", "send_mail", %{email_address: "toto@mail.com", body: "Welcome"}, [timeout: 1_000, max_backoff: 60_000])
 ```
 
-So, the mails_queue_1 was born and you can add it other jobs as we do above.
+to handle changeset errors.
 
-You can notify the pg_queuetopia about a new created job.
+So, the mails_queue_1 was born and you can add it other jobs as we do above.
+When the job creation is out of transaction, Queuetopia is automatically notified about the new job.
+Anyway, you can notify the queuetopia about a new created job.
 
 ```elixir
 MyApp.MailPgQueuetopia.notify(:new_incoming_job)

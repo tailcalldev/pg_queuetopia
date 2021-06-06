@@ -131,6 +131,12 @@ defmodule QueuetopiaTest do
     end
   end
 
+  test "create_job!/5 raises when params are not valid" do
+    assert_raise Ecto.InvalidChangesetError, fn ->
+      TestPgQueuetopia.create_job!("queue", "action", %{}, DateTime.utc_now(), timeout: -1)
+    end
+  end
+
   describe "list_jobs/1" do
     test "list the jobs order by queue and scheduled_at asc" do
       utc_now = utc_now()
