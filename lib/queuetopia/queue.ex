@@ -5,7 +5,6 @@ defmodule PgQueuetopia.Queue do
 
   alias PgQueuetopia.Queue.{Job, Lock}
   alias PgQueuetopia.Queue.JobQueryable
-  alias AntlUtilsElixir.Math
 
   @lock_security_retention 1_000
 
@@ -188,7 +187,7 @@ defmodule PgQueuetopia.Queue do
 
   defp persist_failure(repo, %Job{} = job, error) do
     utc_now = DateTime.utc_now() |> DateTime.truncate(:second)
-    backoff = exponential_backoff(job.attempts, job.max_backoff)
+    backoff = resolve_performer(job).backoff(job)
 
     job
     |> Job.failed_job_changeset(%{
@@ -212,11 +211,6 @@ defmodule PgQueuetopia.Queue do
       done_at: utc_now
     })
     |> repo.update()
-  end
-
-  defp exponential_backoff(iteration, max_backoff) do
-    backoff = ((Math.pow(2, iteration) |> round) + 1) * 1_000
-    min(backoff, max_backoff)
   end
 
   defp resolve_performer(%Job{performer: performer}) do

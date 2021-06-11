@@ -41,7 +41,7 @@ The package can be installed by adding `pg_queuetopia` to your list of dependenc
 ```elixir
 def deps do
   [
-    {:pg_queuetopia, "~> 1.1.0"}
+    {:pg_queuetopia, "~> 1.2.0"}
   ]
 end
 ```

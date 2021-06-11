@@ -272,7 +272,7 @@ defmodule PgQueuetopia.QueueTest do
       assert attempts == 1
     end
 
-    test "backoff is exponential for retry" do
+    test "by default, backoff is exponential for retry" do
       %{id: id} = insert!(:failure_job, max_backoff: 10 * 60 * 1_000)
 
       [2_000, 3_000, 5_000, 9_000, 17_000]
@@ -291,7 +291,32 @@ defmodule PgQueuetopia.QueueTest do
       end)
     end
 
-    test "maximum backoff" do
+    test "applies the backoff defined by the performer" do
+      %{attempted_at: attempted_at} =
+        job =
+        insert!(:failure_job,
+          performer: PgQueuetopia.TestPerfomerWithBackoff |> to_string(),
+          attempted_at: DateTime.utc_now() |> DateTime.truncate(:second)
+        )
+
+      Queue.persist_result(TestRepo, job, {:error, "error"})
+
+      %{next_attempt_at: next_attempt_at} = job = TestRepo.reload(job)
+
+      backoff = PgQueuetopia.TestPerfomerWithBackoff.backoff(job)
+      assert backoff == 20 * 1_000
+
+      assert_in_delta next_attempt_at |> DateTime.to_unix(),
+                      DateTime.add(
+                        attempted_at,
+                        backoff,
+                        :millisecond
+                      )
+                      |> DateTime.to_unix(),
+                      1
+    end
+
+    test "for default backoff, limit to maximum backoff" do
       max_backoff = 2_000
 
       %{id: id} = job = insert!(:failure_job, max_backoff: max_backoff)

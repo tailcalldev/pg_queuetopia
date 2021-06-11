@@ -1,5 +1,5 @@
 defmodule PgQueuetopia.TestPerfomer do
-  @behaviour PgQueuetopia.Performer
+  use PgQueuetopia.Performer
 
   alias PgQueuetopia.Queue.Job
   alias PgQueuetopia.Factory
