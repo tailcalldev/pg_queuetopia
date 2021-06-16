@@ -36,7 +36,7 @@ defmodule PgQueuetopia.MixProject do
       {:postgrex, ">= 0.0.0", only: :test},
       {:jason, "~> 1.0"},
       {:antl_utils_elixir, "~> 0.3.0"},
-      {:antl_utils_ecto, "1.3.0"},
+      {:antl_utils_ecto, "2.2.0"},
       {:mox, "~> 0.5", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
